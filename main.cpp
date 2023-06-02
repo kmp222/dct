@@ -262,7 +262,7 @@ int main() {
         avg_time = duration_cast<microseconds>(end - start).count() / 1000000.0 / (float) nIter; // average time in microseconds of a single iteration on fftw dct
 
         // print performances to console
-        cout << "MY DCT : " << endl;
+        cout << "LIBRARY DCT : " << endl;
         cout << "SIZE: " << sizes[i] << " TEMPO MEDIO: " << avg_time << endl;
 
         // save performance to txt file as (size, time)
