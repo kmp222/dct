@@ -1,71 +1,12 @@
 #include <iostream>
 #include "fftw3.h"
 #include <cstdlib>
+#include <chrono>
+#include <fstream>
 
 const double pi = 3.14159265359;
 using namespace std;
-
-// 1D FUNCTIONS
-/* void print_vector(int n, double* vec) {
-
-    for (int i = 0; i < n; i++)
-        cout << vec[i] << " ";
-    printf("\n");
-
-}
-
-void normalize_vector(int n, double* vec) {
-
-    double f = sqrt(1.0 / 2.0 / n);
-
-    vec[0] *= sqrt(1.0 / 4.0 / n);
-
-    for (int i = 1; i < n; i++)
-        vec[i] *= f;
-
-}
-
-void library_dct2_1d() {
-
-    // create vector
-    double a[] = { 231, 32, 233, 161, 24, 71, 140, 245 };
-    int vec_size = sizeof(a) / sizeof(double);
-   
-    // print vector
-    printf("input vector: ");
-    print_vector(vec_size, a);   
-
-    // dct
-    fftw_plan plan = fftw_plan_r2r_1d(vec_size, a, a, FFTW_REDFT10, FFTW_ESTIMATE);
-    fftw_execute(plan);
-
-    // normalize vector
-    normalize_vector(vec_size, a);
-
-    // print 
-    printf("DCT2 on input vector: ");
-    print_vector(vec_size, a);
-
-    // free memory
-    fftw_destroy_plan(plan);
-    fftw_cleanup();
-
-}
-*/
-
-// 2D FUNCTIONS
-
-template <int rows, int column>
-/* void print_matrix_as_ref(double(&a)[rows][column])
-{
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < column; j++) {
-            cout << a[i][j] << " ";
-        }
-        printf("\n");
-    }
-}
-*/
+using namespace chrono;
 
 void print_matrix(double** a, int size)
 {
@@ -96,7 +37,50 @@ double** generate_matrix(int size) {
 
 }
 
-double** library_dct2_2d(double** a, int matrix_size) {
+void delete_matrix(double** M, int rowSize, int colSize) {
+    for (int row = 0; row < rowSize; row++) {
+        delete[] M[row];
+        M[row] = NULL;
+    }
+    delete[] M;
+    M = NULL;
+}
+
+double* library_dct2_2d(double* a, int matrix_size) {
+
+    // init result matrix
+    double* dct = new double[matrix_size*matrix_size];
+
+    // dct
+    fftw_plan plan = fftw_plan_r2r_2d(matrix_size, matrix_size, a, dct, FFTW_REDFT10, FFTW_REDFT10, FFTW_ESTIMATE);
+    fftw_execute(plan);
+
+    // normalize matrix
+    double c = 1.0 / (matrix_size * 2.0);
+    double c0 = 1.0 / sqrt(2.0);
+
+    dct[0] *= c * c0 * c0;
+
+    for (int i = 1; i < matrix_size; i++) {
+        dct[i] *= c * c0;
+    }
+    for (int i = matrix_size; i < matrix_size * matrix_size; i++) {
+        if (i % matrix_size == 0)
+            dct[i] *= c * c0;
+        else
+            dct[i] *= c;
+    }    
+
+    // free memory
+    fftw_destroy_plan(plan);
+    fftw_free;
+    fftw_cleanup();
+
+    return dct;
+
+}
+
+/* double** library_dct2_2d_old(double** a, int matrix_size) {
 
     // init result matrix
     double** dct = new double* [matrix_size];
@@ -130,11 +114,12 @@ double** library_dct2_2d(double** a, int matrix_size) {
     
     // free memory
     fftw_destroy_plan(plan);
+    fftw_free;
     fftw_cleanup();
 
     return dct;
 
-}
+} */
 
 double** my_dct2_2d(double** a, int matrix_size) {
 
@@ -147,7 +132,6 @@ double** my_dct2_2d(double** a, int matrix_size) {
     // dct + normalization
     double ci, cj, val_dct, sum;
 
-    // double tmp_dct[matrix_size][matrix_size]{};
     double** tmp_dct = new double* [matrix_size];
     for (int i = 0; i < matrix_size; i++) {
         tmp_dct[i] = new double[matrix_size];
@@ -203,6 +187,8 @@ double** my_dct2_2d(double** a, int matrix_size) {
         }
     }
 
+    delete_matrix(tmp_dct, matrix_size, matrix_size);
+
     return dct;
 
 }
@@ -211,38 +197,148 @@ double** my_dct2_2d(double** a, int matrix_size) {
 
 int main() {
 
+    // init output file to save performances
+    ofstream file;
+
+    // matrix sizes for testing
     int sizes[28] = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
 
-    for (int i = 0; i < sizeof(sizes) / sizeof(int); i++) {
+    // test implementations on each size
+    for (int i = 0; i < sizeof(sizes)/sizeof(int); i++) {
 
-        double** a = generate_matrix(sizes[i]);
+        double** a = generate_matrix(sizes[i]); // generate matrix of n-size
 
-        // TIMER
-        for (int j = 0; j < 100; j++) {
+        auto start = high_resolution_clock::now();
 
-            my_dct2_2d(a, sizes[i]);
+        int nIter = 100; // set number of iterations on both implementations
+
+        for (int j = 0; j < nIter; j++) {
+
+            my_dct2_2d(a, sizes[i]); // apply my dct on matrix of n-size
 
         }
-        // END TIMER
 
-        // int media tempo / 100
-        // salva in file (size, tempo)
+        auto end = high_resolution_clock::now();
 
-        // TIMER2
-        /* for (i = 0; i < 100; i++) {
+        float avg_time = duration_cast<microseconds>(end - start).count() / 1000000.0 / (float) nIter; // average time in microseconds of a single iteration on my dct
 
-            library_dct2_2d(a, sizes[i]);
+        // print performances to console
+        cout << "MY DCT : " << endl;
+        cout << "SIZE: " << sizes[i] << " TEMPO MEDIO: " << avg_time << endl;
+        
+        // save performance to txt file as (size, time)
+        file.open("my_dct_performance.txt", std::ofstream::out | std::ofstream::app);
+        file << sizes[i] << " " << avg_time << "\n";
+        file.close();
 
-        } */
-        // TIMER2
+        // create matrix stored in row major order starting from original matrix (fftw requirement)
+        double* b = new double[sizes[i] * sizes[i]];
+        for (int k = 0; k < sizes[i]; k++) {
+            b[k] = a[0][k];
+        }
 
-        // int media tempo / 100
-        // salva in file2 (size, tempo)
+        int row = 1;
+        int counter = sizes[i];
 
-        delete a;
+        while (counter < sizes[i] * sizes[i]) {
+
+            for (int column = 0; column < sizes[i]; column++) {
+                b[counter] = a[row][column];
+                counter++;
+            }
+            row++;
+        }
+
+        start = high_resolution_clock::now();
+
+        for (int k = 0; k < nIter; k++) {
+
+            library_dct2_2d(b, sizes[i]); // apply fftw dct on matrix in row major order of n-size
+
+        }
+
+        end = high_resolution_clock::now();
+
+        avg_time = duration_cast<microseconds>(end - start).count() / 1000000.0 / (float) nIter; // average time in microseconds of a single iteration on fftw dct
+
+        // print performances to console
+        cout << "MY DCT : " << endl;
+        cout << "SIZE: " << sizes[i] << " TEMPO MEDIO: " << avg_time << endl;
+
+        // save performance to txt file as (size, time)
+        file.open("library_performance.txt", std::ofstream::out | std::ofstream::app);
+        file << sizes[i] << " " << avg_time << "\n";
+        file.close();
+
+        // free memory
+        delete_matrix(a, sizes[i], sizes[i]);
+        delete[] b;
+        b = NULL;
 
     }
 
     return 0;
 
 }
+
+// MAIN FOR TESTING
+/* int main() {
+
+    // init input
+    int size = 4;
+    double** a = generate_matrix(size);
+
+    // print input
+    printf("INPUT MATRIX:\n");
+    print_matrix(a, size);
+
+    // my dct
+    double** r = my_dct2_2d(a, size);
+
+    // print my dct
+    printf("\nMY DCT:\n");
+    print_matrix(r, size);
+
+    // library dct
+    // double** r2 = library_dct2_2d_old(a, size);
+
+    // print library dct
+    // printf("\nLIBRARY DCT:\n");
+    // print_matrix(r2, size);
+
+    // library2 dct
+
+    // create matrix stored in row major order starting from original matrix (fftw requirement)
+    double* b = new double[size*size];
+    for (int i = 0; i < size; i++) {
+        b[i] = a[0][i];
+    }
+
+    int row = 1;
+    int i = size;
+
+    while (i < size*size) {
+
+        for (int column = 0; column < size; column++) {
+            b[i] = a[row][column];
+            i++;
+        }
+        row++;
+    }
+
+    double* r3 = library_dct2_2d(b, size);
+
+    // print library2 dct
+    printf("\nLIBRARY2 DCT:\n");
+    for (int i = 0; i < size*size; i++) {
+        cout << r3[i] << " ";
+    }
+
+    delete a;
+    delete r;
+    // delete r2;
+    delete r3;
+
+    return 0;
+ 
+} */
