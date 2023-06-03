@@ -179,7 +179,7 @@ int main() {
 
         auto end = high_resolution_clock::now();
 
-        float avg_time = duration_cast<microseconds>(end - start).count() / (float) 1000000.0 / (float) nIter; // average time in microseconds of a single iteration on my dct
+        float avg_time = duration_cast<microseconds>(end - start).count() / (float)1000000.0 / (float)nIter; // average time in microseconds of a single iteration on my dct
 
         // print performances to console
         cout << "MY DCT: " << endl;
@@ -219,6 +219,7 @@ int main() {
         // free memory
         delete_matrix(input_matrix, sizes[i], sizes[i]);
         
+        
         // create array for fftw dct result
         double* lib_res = new double[sizes[i] * sizes[i]];
 
@@ -227,7 +228,7 @@ int main() {
 
         for (int k = 0; k < nIter; k++) {
 
-            // library_dct2_2d(lib_input_array, lib_res, sizes[i]); // apply fftw dct on matrix in row major order of n-size
+            library_dct2_2d(lib_input_array, lib_res, sizes[i]); // apply fftw dct on matrix in row major order of n-size
 
         }
 
