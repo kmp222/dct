@@ -55,23 +55,19 @@ void library_dct2_2d(double* a, double* r, int matrix_size) {
     // normalize matrix
     double c = 1.0 / (matrix_size * 2.0);
     double c0 = 1.0 / sqrt(2.0);
+    double c_scaled = c * c0;
 
-    r[0] *= c * c0 * c0;
+    r[0] *= c_scaled * c0;
 
     for (int i = 1; i < matrix_size; i++) {
-        r[i] *= c * c0;
+        r[i] *= c_scaled;
     }
     for (int i = matrix_size; i < matrix_size * matrix_size; i++) {
-        if (i % matrix_size == 0)
-            r[i] *= c * c0;
-        else
-            r[i] *= c;
-    }    
+        r[i] *= (i % matrix_size == 0) ? c_scaled : c;
+    }
 
     // free memory
     fftw_destroy_plan(plan);
-    fftw_free;
-    fftw_cleanup();
 
 }
 
@@ -217,8 +213,7 @@ int main() {
         }
 
         // free memory
-        delete_matrix(input_matrix, sizes[i], sizes[i]);
-        
+        delete_matrix(input_matrix, sizes[i], sizes[i]);      
         
         // create array for fftw dct result
         double* lib_res = new double[sizes[i] * sizes[i]];
@@ -309,9 +304,9 @@ int main() {
 
     library_dct2_2d(b, result, size);
 
-    // print library2 dct
-    printf("\nLIBRARY2 DCT:\n");
-    for (int i = 0; i < size*size; i++) {
+    // print library dct
+    printf("\nLIBRARY DCT:\n");
+    for (int i = 0; i < size * size; i++) {
         cout << result[i] << " ";
     }
 
