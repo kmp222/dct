@@ -1,12 +1,15 @@
+// Test DCT2 implementation and FFTW DCT2 on same inputs
+
+// TODO seperate functions and main in different files
+
 #include <iostream>
 #include "fftw3.h"
 #include <cstdlib>
-#include <chrono>
 #include <fstream>
+#include <time.h>
 
 const double pi = 3.14159265359;
 using namespace std;
-using namespace chrono;
 
 void print_matrix(double** a, int size)
 {
@@ -68,9 +71,12 @@ void library_dct2_2d(double* a, double* r, int matrix_size) {
 
     // free memory
     fftw_destroy_plan(plan);
+    fftw_cleanup();
+    fftw_free;
 
 }
 
+// TODO array instead of matrix as parameter
 void my_dct2_2d(double** a, double** r, int matrix_size) {
 
     // dct + normalization
@@ -143,14 +149,15 @@ int main() {
     ofstream file;
 
     // matrix sizes for testing
-    int sizes[29] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 };
+    int sizes[28] = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000 };
+
+    // set number of iterations on both implementations
+    int nIter = 100; 
 
     // test implementations on each size
     for (int i = 0; i < sizeof(sizes) / sizeof(int); i++) {
 
         double** input_matrix = generate_matrix(sizes[i]); // generate matrix of n-size
-
-        int nIter = 100; // set number of iterations on both implementations
 
         if (sizes[i] >= 100) {
             nIter = 50;
@@ -165,7 +172,7 @@ int main() {
         }
 
         // measure time for benchmark
-        auto start = high_resolution_clock::now();
+        auto start = (double) clock();
 
         for (int j = 0; j < nIter; j++) {
 
@@ -173,9 +180,9 @@ int main() {
 
         }
 
-        auto end = high_resolution_clock::now();
+        auto end = (double) clock() - start;
 
-        float avg_time = duration_cast<microseconds>(end - start).count() / (float)1000000.0 / (float)nIter; // average time in microseconds of a single iteration on my dct
+        float avg_time = ((float)end / (float)CLOCKS_PER_SEC) / (float)nIter; // average time in seconds of a single iteration on my dct
 
         // print performances to console
         cout << "MY DCT: " << endl;
@@ -194,6 +201,7 @@ int main() {
         // ---------------------------------------------------------------------------------------- LIBRARY DCT TEST
 
         // create matrix stored in row major order starting from original matrix (fftw requirement)
+        // TODO AS FUNCTION
         double* lib_input_array = new double[sizes[i] * sizes[i]];
 
         for (int k = 0; k < sizes[i]; k++) {
@@ -219,7 +227,7 @@ int main() {
         double* lib_res = new double[sizes[i] * sizes[i]];
 
         // measure time for benchmark
-        start = high_resolution_clock::now();
+        start = (double) clock();
 
         for (int k = 0; k < nIter; k++) {
 
@@ -227,9 +235,9 @@ int main() {
 
         }
 
-        end = high_resolution_clock::now();
+        end = (double) clock() - start;
 
-        avg_time = duration_cast<microseconds>(end - start).count() / (float) 1000000.0 / (float) nIter; // average time in microseconds of a single iteration on fftw dct
+        avg_time = ( (float) end / (float) CLOCKS_PER_SEC) / (float) nIter; // average time in seconds of a single iteration on fftw dct
 
         // print performances to console
         cout << "LIBRARY DCT: " << endl;
@@ -278,6 +286,9 @@ int main() {
     printf("\nMY DCT:\n");
     print_matrix(res, size);
 
+    // free memory
+    delete_matrix(res, size, size);
+
     // library dct
 
     // create matrix stored in row major order starting from original matrix (fftw requirement)
@@ -299,20 +310,22 @@ int main() {
         row++;
     }
 
+    // free memory
+    delete_matrix(a, size, size);
+
     // create array for fftw dct result
     double* result = new double[size*size];
 
     library_dct2_2d(b, result, size);
 
     // print library dct
+    // TODO define function to print vector as matrix in row major order
     printf("\nLIBRARY DCT:\n");
     for (int i = 0; i < size * size; i++) {
         cout << result[i] << " ";
     }
 
     // free memory
-    delete_matrix(a, size, size);
-    delete_matrix(res, size, size);
     delete[] b;
     delete[] result;
     b = NULL;
