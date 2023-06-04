@@ -1,6 +1,6 @@
 // Test DCT2 implementation and FFTW DCT2 on same inputs
 
-// TODO seperate functions and main in different files
+// TODO separate functions and main in different files
 
 #include <iostream>
 #include "fftw3.h"
