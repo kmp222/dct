@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "fftw3.h"
+#include <math.h>
 #include <cstdlib>
 #include <fstream>
 #include <time.h>
