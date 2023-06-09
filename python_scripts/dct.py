@@ -45,10 +45,21 @@ def bench(size):
 	max_iter = 100
 	start = time.perf_counter()
 	for _ in range(0, max_iter):
-		tmp_result = dctn(matrix, type=2, norm='ortho', axes=(0,1))
-
+		tmp_result = dctn(matrix, type=2, norm='ortho', axes=(0, 1))
 	end = time.perf_counter() - start
 	return (tmp_result, end/ max_iter)
+
+
+def my_bench(size):
+	matrix = np.random.rand(size, size) * 255.0
+
+	max_iter = 100
+	start = time.perf_counter()
+	for _ in range(0, max_iter):
+		my_dct2_2d(matrix)
+	end = time.perf_counter() - start
+	print(size)
+	return end/max_iter
 
 
 if __name__ == "__main__":
@@ -60,4 +71,11 @@ if __name__ == "__main__":
 	for i in range(1, len(sizes)):
 		out = f'{out}\n{sizes[i]} {scipy_times[i]}'
 	f = open('scipy.txt', 'w')
+	f.write(out)
+	sizes = [i for i in range(10, 101, 10)]
+	my_times = [my_bench(size) for size in sizes]
+	out = f"{sizes[0]} {my_times[0]}"
+	for i in range(1, len(sizes)):
+		out = f'{out}\n{sizes[i]} {my_times[i]}'
+	f = open('my_times.txt', 'w')
 	f.write(out)

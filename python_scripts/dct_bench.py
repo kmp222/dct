@@ -59,3 +59,15 @@ plt.yscale('log')
 plt.legend()
 plt.savefig('times.pdf', format='pdf', bbox_inches='tight')
 plt.close()
+
+my_py_times = parse_c_times('my_times.txt')
+sizes = [i for i in range(10,101, 10)]
+my_times = my_times[:10]
+plt.plot(sizes, my_py_times, label='Python')
+plt.plot(sizes, my_times, label='C++')
+
+plt.ylabel('Time (s)')
+plt.yscale('log')
+plt.legend()
+plt.savefig('de_novo_times.pdf', format='pdf', bbox_inches='tight')
+plt.close()
