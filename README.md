@@ -1,2 +1,7 @@
-Implementazione da zero della Discrete Cosine Transform in C++ e confronto tempi/risultati con implementazione fornita dalla libreria open source FFTW.
-Ulteriore confronto con un'implementazione da zero in Python e e una fornita dalla libreria Scipy per Python.
+# Discrete Cosine Transform (DCT) Comparison
+
+This project aims to implement the Discrete Cosine Transform (DCT) from scratch in C++ and compare its performance with established libraries such as FFTW. Additionally, we provide a Python implementation from scratch and compare it with the Scipy library's DCT implementation.
+
+## Acknowledgments
+FFTW - Fastest Fourier Transform in the West
+Scipy - Open-source library for mathematics, science, and engineering
